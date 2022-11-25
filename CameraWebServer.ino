@@ -1,3 +1,4 @@
+#include "MatrixMath.h"
 #include "esp_camera.h"
 #include "Arduino.h"
 #include "FS.h"                // SD Card ESP32
@@ -32,6 +33,7 @@
 #define TAM_IMAGEN  9600
 int pictureNumber = 0;
 uint8_t imagen[TAM_IMAGEN];
+double salida[] = {5.0, 5.0};
 void setup() {
   WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); //disable brownout detector
  
@@ -89,7 +91,13 @@ void setup() {
     Serial.println("No SD Card attached");
     return;
   }
-    
+  // Alojar la memoria para el vector de 9600x2
+  /*double** RM = (double**)malloc(9600 * sizeof(double*));
+  for (int index=0;index<9600;++index)
+  {
+    RM[index] = (double*)malloc(2 * sizeof(double));
+  }*/
+
   camera_fb_t * fb = NULL;
   
   // Take Picture with Camera
@@ -118,6 +126,7 @@ void setup() {
     Serial.printf("numero de bytes: %d\n", escritos);
     int i = 0, j = 0, cols = 0, residuo;
     Serial.printf("[[");
+    // Convertir imagen de 120x160 a 80x120
     for(i = 0; i < escritos; i++) {
       residuo = (i + 1)%160;
       if(residuo == 0) {
@@ -139,6 +148,8 @@ void setup() {
         Serial.printf("%d,", (uint8_t) imagen[i]);
       }
     }
+    Matrix.Multiply((mtx_type*) imagen, (mtx_type*) imagen, 1, 9600, 2, (mtx_type*) salida);
+    Serial.printf("\nSALIDA: %.2f, %.2f", salida[0]);
     Serial.printf("");
     EEPROM.write(0, pictureNumber);
     EEPROM.commit();
